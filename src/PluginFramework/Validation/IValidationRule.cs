@@ -2,6 +2,6 @@
 {
     public interface IValidationRule
     {
-        void Validate<TInput, TOutput>(IPluginDefinition<TInput, TOutput> pluginDefintion);
+        ValidationResult Validate<TInput, TOutput>(IPlugin<TInput, TOutput> plugin);
     }
 }

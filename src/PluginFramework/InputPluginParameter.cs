@@ -1,6 +1,7 @@
 ﻿namespace PluginFramework
 {
-    public class InputPluginParameter : PluginParameter
+    public sealed class InputPluginParameter : PluginParameter
     {
+        public string DisplayName { get; set; }
     }
 }

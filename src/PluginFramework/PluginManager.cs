@@ -1,39 +1,64 @@
-﻿using PluginFramework.Validation;
+﻿using Autofac;
+using PluginFramework.IoC;
+using PluginFramework.Scanning;
 using System;
-using System.Linq;
-using System.Reflection;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("PluginFramework.Tests")]
 
 namespace PluginFramework
 {
-    public static class PluginManager
+    public sealed class PluginManager<TInput, TOutput> : IPluginManager<TInput, TOutput>
     {
-        public static PluginDefinitionManager<TInput, TOutput> ForDefintion<TInput, TOutput>(IPluginDefinition<TInput, TOutput> pluginDefinition)
+        private readonly PluginScanner<TInput, TOutput> scanner;
+
+        private IEnumerable<IPlugin<TInput, TOutput>> plugins;
+
+        public IEnumerable<IPlugin<TInput, TOutput>> Plugins
         {
-            return new PluginDefinitionManager<TInput, TOutput>(pluginDefinition);
+            get
+            {
+                return plugins;
+            }
+        }
+
+        public Dictionary<string, IEnumerable<ErrorResult>> PluginAssemblyLoadErrors
+        {
+            get
+            {
+                return scanner.PluginAssemblyLoadErrors;
+            }
+        }
+
+        public Dictionary<Type, IEnumerable<ErrorResult>> PluginValidationErrors
+        {
+            get
+            {
+                return scanner.PluginValidationErrors;
+            }
+        }
+        internal PluginManager(PluginScanner<TInput, TOutput> scanner)
+        {
+            this.scanner = scanner;
+
+            this.plugins = new List<IPlugin<TInput, TOutput>>();
+        }
+
+        public void ScanForPlugins(string directory, string assemblyName)
+        {
+            this.plugins = scanner.ScanDirectory(directory, assemblyName);
         }
     }
 
-    public class PluginDefinitionManager<TInput, TOutput>
+    public static class PluginManager
     {
-        private readonly IPluginDefinition<TInput, TOutput> pluginDefinition;
-
-        public PluginDefinitionManager(IPluginDefinition<TInput, TOutput> pluginDefinition)
+        public static IPluginManager<TInput, TOutput> ForPluginTypes<TInput, TOutput>()
         {
-            this.pluginDefinition = pluginDefinition;
-        }
+            var builder = new ContainerBuilder();
+            builder.RegisterPluginFrameworkDependencies();
 
-        public void Validate()
-        {
-            var currentAssembly = typeof(IValidationRule).GetTypeInfo().Assembly;
-            var validatorTypes = currentAssembly.GetTypes()
-                .Where(t => t.IsClass
-                && typeof(IValidationRule).IsAssignableFrom(t));
-
-            foreach (var validatorType in validatorTypes)
-            {
-                var validator = (IValidationRule)Activator.CreateInstance(validatorType);
-                validator.Validate(pluginDefinition);
-            }
+            return (IPluginManager<TInput, TOutput>)builder.Build().Resolve(typeof(IPluginManager<TInput, TOutput>));
         }
     }
 }

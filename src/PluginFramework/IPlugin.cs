@@ -1,6 +1,6 @@
 ﻿namespace PluginFramework
 {
-    public interface IPluginDefinition<TInput, TOutput>
+    public interface IPlugin<TInput, TOutput>
     {
         TOutput Execute(TInput input);
     }

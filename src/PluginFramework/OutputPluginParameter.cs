@@ -1,6 +1,6 @@
 ﻿namespace PluginFramework
 {
-    public class OutputPluginParameter : PluginParameter
+    public sealed class OutputPluginParameter : PluginParameter
     {
     }
 }
